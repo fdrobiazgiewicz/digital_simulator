@@ -1,0 +1,6 @@
+﻿  Buffer.cpp
+  Network.cpp
+  User.cpp
+C:\Users\hoffm\source\repos\sc_classes\sc_classes\User.cpp(4,1): error C2789:  'User::user_type_': an object of const-qualified type must be initialized
+  Generating Code...
+C:\Users\hoffm\source\repos\sc_classes\sc_classes\User.h(18): message :  see declaration of 'User::user_type_'
