@@ -123,9 +123,9 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
 //            break;
-            return go_to_buffer;
         }
     }
+    return go_to_buffer;
 }
 
 void Network::print_decision_list() {

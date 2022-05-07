@@ -1,4 +1,4 @@
-# Install script for directory: D:/Downloads/sc_classes/sc_classes/sc_classes
+# Install script for directory: C:/Users/phili/PycharmProjects/Digital Simulator/digital_simulator
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "D:/Downloads/sc_classes/sc_classes/sc_classes/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "C:/Users/phili/PycharmProjects/Digital Simulator/digital_simulator/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
