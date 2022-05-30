@@ -20,6 +20,7 @@ public:
     size_t get_buffer_size(){ return buffer_.size(); }
     std::queue<std::shared_ptr<User>> get_buffer(){ return buffer_; }
     void add_user_to_buffer(std::shared_ptr<User> user){ buffer_.push(user); }
+    void delete_user_from_buffer() { buffer_.pop(); }
 
 
 private:

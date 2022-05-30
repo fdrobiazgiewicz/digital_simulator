@@ -48,6 +48,7 @@ private:
     const int number_of_channels = 20;
     size_t radar_generate_time = -1;
     size_t radar_transmission_time = -1;
+    size_t radar_connection_time = 10;
     size_t user_generate_time = -1;
     size_t buffer_polling = 0;
     bool connection_success = false;
