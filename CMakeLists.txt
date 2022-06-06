@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(sc_classes)
+project(digital_simulator)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -18,4 +18,4 @@ add_executable(sc_classes
         Simulator.cpp
         Simulator.h
         User.cpp
-        User.h)
+        User.h RandomGenerator.h RandomGenerator.cpp)

@@ -30,7 +30,7 @@ void Network::Init(){
 void Network::RadarConnection() {
     for (int i=0; i<5; i++){
         if (!channels_[i].get()->is_free()){
-            spdlog::info("User removed from channel due to Radar priority connection.");
+            spdlog::debug("User removed from channel due to Radar priority connection.");
             channels_[i].get()->disconnect_from_channel();
             channels_[i].get()->set_connection_time(radar_connection_time * 1000);
         }
@@ -62,13 +62,13 @@ void Network::U2ConnectToChannel(std::shared_ptr<User> user) {
     // Add user to buffer
     if(buffer_.get_buffer_size() < 5 && go_to_buffer){
 //        std::cout<<"User U2 added to buffer."<<std::endl;
-        spdlog::info("User U2 added to buffer.");
+        spdlog::debug("User U2 added to buffer.");
         buffer_.add_user_to_buffer(user);
         decision_list_.remove(user);
     }
     // Delete user if buffer is full and no free channels
     else{
-        spdlog::info("User removed from decision list.");
+        spdlog::debug("User removed from decision list.");
 //        std::cout<<"User removed from decision list\n";
         decision_list_.remove(user);
     }
@@ -88,7 +88,7 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
 //            std::cout << "User U2 connected to the channel of index " << i << std::endl;
-            spdlog::info("User U2 connected to the channel of index {} ", i);
+            spdlog::debug("User U2 connected to the channel of index {} ", i);
             connection_success = true;
             return go_to_buffer;
 //            break;
@@ -102,7 +102,7 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
-            spdlog::info("User U2 connected to the channel of index {} (Common channel)", i);
+            spdlog::debug("User U2 connected to the channel of index {} (Common channel)", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
 //            break;
@@ -111,8 +111,8 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
 
         else if (channels_[i].get()->get_user_type() == User::UserType::NOT_LICENSED){
             go_to_buffer = false;
-            spdlog::info("User U2 connected to the channel of index {} ", i);
-            spdlog::info("User U3 deleted due to U2 connection priority.");
+            spdlog::debug("User U2 connected to the channel of index {} ", i);
+            spdlog::debug("User U3 deleted due to U2 connection priority.");
             channels_[i].get()->connect_to_channel();
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
@@ -131,7 +131,7 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
-            spdlog::info("User U2 connected to the channel of index {} (Dedicated for Radar)", i);
+            spdlog::debug("User U2 connected to the channel of index {} (Dedicated for Radar)", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
 //            break;
@@ -145,7 +145,7 @@ void Network::U3ConnectToChannel(std::shared_ptr<User> user) {
     bool go_to_buffer = U3ChannelAccess(user);
     // Add user to buffer
     if (buffer_.get_buffer_size() < 5 && go_to_buffer) {
-        spdlog::info("User U3 added to buffer.");
+        spdlog::debug("User U3 added to buffer.");
 //        std::cout << "User U3 added to buffer." << std::endl;
         buffer_.add_user_to_buffer(user);
         decision_list_.remove(user);
@@ -170,7 +170,7 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
-            spdlog::info("User U3 connected to the channel of index {}", i);
+            spdlog::debug("User U3 connected to the channel of index {}", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
 //            break;
@@ -186,7 +186,7 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
-            spdlog::info("User U3 connected to the channel of index {} (Dedicated for Radar)", i);
+            spdlog::debug("User U3 connected to the channel of index {} (Dedicated for Radar)", i);
             connection_success = true;
 //            break;
             return go_to_buffer;
@@ -201,7 +201,7 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
             decision_list_.remove(user);
-            spdlog::info("User U3 connected to the channel of index {} (Dedicated for U2)", i);
+            spdlog::debug("User U3 connected to the channel of index {} (Dedicated for U2)", i);
             connection_success = true;
 //            break;
             return go_to_buffer;
@@ -222,7 +222,7 @@ void Network::BufferPolling() {
         connection_success = false;
         bool _ = U2ChannelAccess(buffer.front());
         if (connection_success){
-            spdlog::info("(Connection from buffer)");
+            spdlog::debug("(Connection from buffer)");
 //            std::cout<<"User U2 connected from buffer."<<std::endl;
             buffer_.delete_user_from_buffer();
         }
@@ -230,7 +230,7 @@ void Network::BufferPolling() {
             buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
         }
         if (buffer.front()->get_connection_try_count() == 5){
-            spdlog::info("USER DELETED FROM BUFFER");
+            spdlog::debug("USER DELETED FROM BUFFER");
 //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
             buffer_.delete_user_from_buffer();
         }
@@ -239,7 +239,7 @@ void Network::BufferPolling() {
         connection_success = false;
         bool _ = U3ChannelAccess(buffer.front());
         if (connection_success){
-            spdlog::info("(Connection from buffer)");
+            spdlog::debug("(Connection from buffer)");
 //            std::cout<<"User U3 connected from buffer."<<std::endl;
             buffer_.delete_user_from_buffer();
         }
@@ -247,7 +247,7 @@ void Network::BufferPolling() {
             buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
         }
         if (buffer.front()->get_connection_try_count() == 5){
-            spdlog::info("USER DELETED FROM BUFFER");
+            spdlog::debug("USER DELETED FROM BUFFER");
 //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
             buffer_.delete_user_from_buffer();
         }
