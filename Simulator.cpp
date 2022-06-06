@@ -4,6 +4,7 @@
 #include <iostream>
 #include "spdlog/spdlog.h"
 #include "RandomGenerator.h"
+#include <fstream>
 
 int max_arrival_time = 100;
 
@@ -13,44 +14,51 @@ Simulator::Simulator(Network* network) : network_(network)
 {
 }
 
-void Simulator::M1(int time, double tau_lambda, double q_lambda, double n) {
+void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int seed_set, bool if_debug) {
 
-    spdlog::set_level(spdlog::level::info);
+    if (if_debug) {
+        spdlog::set_level(spdlog::level::debug);
+    }
+    else{
+        spdlog::set_level(spdlog::level::info);
+    }
 
+    // Seeds handling
     auto generator = new RandomGenerator(24324234);
-    std::cout << "RndExp: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 2: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 2: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 3: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 3: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 4: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 4: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 5: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 5: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 6: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 6: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 7: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 7: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 8: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 8: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
-    std::cout << "RndExp 9: " << (generator->RndExp(tau_lambda) + 1) * 1000 << std::endl;
-    std::cout<<"Previous 9: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
+    generator->GenerateSeeds(40);
+    int seed;
+    std::vector<int>seeds;
+    std::ifstream seed_file("seeds.txt");
+
+    for (int i = 0; i < (seed_set * 4); i++){
+        seed_file >> seed;
+        if (i >= (seed_set - 1) * 4){
+            seeds.push_back(seed);
+            std::cout<<"Seed "<<i + 1<<" is: "<<seed<<std::endl;
+        }
+    }
+
+    auto tau_gen = new RandomGenerator(seeds[0]);
+    auto uni_gen = new RandomGenerator(seeds[1]);
+    auto q_gen = new RandomGenerator(seeds[2]);
+    auto dec_gen = new RandomGenerator(seeds[3]);
+
+
+
+//    std::cout << "RndExp: " << (tau_gen->RndExp(tau_lambda) + 1) * 1000 << std::endl;
+//    std::cout<<"Previous: "<<rand() % (1000 * max_arrival_time) + 1<<std::endl;
+
 
     // Dla radaru - czas do aktywacji (1,5)s
-    std::cout<<"Uniform <1,5ms>"<<round((generator->Rand()) * 5) * 1000<<std::endl;
-    std::cout<<"Uniform <1,5ms>"<<round((generator->Rand()) * 5) * 1000<<std::endl;
-    std::cout<<"Uniform <1,5ms>"<<round((generator->Rand()) * 5) * 1000<<std::endl;
+//    std::cout<<"Uniform <1,5ms>"<<round((uni_gen->Rand()) * 5) * 1000<<std::endl;
+
 
     // Czas trwania połączeń użytkowników o intensywności 1ms^-1
-    std::cout<<"q1: "<<(generator->RndExp(q_lambda) + 1) * 1000<<std::endl;
-    std::cout<<"q2: "<<(generator->RndExp(q_lambda) + 1) * 1000<<std::endl;
-    std::cout<<"q3: "<<(generator->RndExp(q_lambda) + 1) * 1000<<std::endl;
-    std::cout<<"q4: "<<(generator->RndExp(q_lambda) + 1) * 1000<<std::endl;
-    std::cout<<"q5: "<<(generator->RndExp(q_lambda) + 1) * 1000<<std::endl;
+//    std::cout<<"q1: "<<(q_gen->RndExp(q_lambda) + 1) * 1000<<std::endl;
+
 
     // Rozkład 0-1 nkowy
-    std::cout<<"01: "<<generator->RndZeroOne(n)<<std::endl;
+//    std::cout<<"01: "<<dec_gen->RndZeroOne(n)<<std::endl;
 
 
 
@@ -58,9 +66,8 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n) {
     time *= 1000;
     clock_ = 0;
     network_->Init();
-    network_->radar_set_generate_timer(rand() % (1000 * max_arrival_time) + 1);
-    network_->user_set_generate_time(rand() % (1000 * max_arrival_time) + 1);
-//    std::cout << "Started Simulation method M1: \n";
+    network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 1000);
+    network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
     spdlog::info("Started Simulation method M1");
     float clock_counter = 0;
 
@@ -92,13 +99,14 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n) {
                 spdlog::debug("Radar disconnect");
                 network_->RadarDisconnection();
                 network_->radar_set_transmission_time(-1);
-                network_->radar_set_generate_timer(rand() % (1000 * max_arrival_time) + 1);
+                network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 1000);
                 no_event = false;
             }
             // User U2/U3 arrival
             if (network_->user_get_generate_time() == 0) {
-                network_->UserArrival(clock_, (rand() % (1000 * max_arrival_time) + 1));
-                network_->user_set_generate_time(rand() % (10 * 1000) + 1);
+                network_->UserArrival(clock_, (q_gen->RndExp(q_lambda) + 1) * 1000,
+                                      dec_gen->RndZeroOne(n));
+                network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
 //                std::cout << "New user!" << std::endl;
                 spdlog::debug("New user!");
                 no_event = false;
@@ -129,12 +137,6 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n) {
                 network_->BufferPolling();
                 network_->set_buffer_polling_time(0.2 * 1000);
             }
-
-
-
-
-
-
         }
 
         // Update time

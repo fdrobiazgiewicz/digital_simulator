@@ -14,6 +14,7 @@ public:
     int RndZeroOne(double p);
 
     int get_kernel() { return kernel_; }
+    void GenerateSeeds(int no_seeds);
 
 private:
     int kernel_;

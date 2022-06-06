@@ -1,5 +1,9 @@
 # include "RandomGenerator.h"
 #include <cmath>
+#include <fstream>
+#include <vector>
+#include <iostream>
+#include <iterator>
 
 RandomGenerator::RandomGenerator(int kernel): kernel_(kernel)
 {
@@ -38,3 +42,18 @@ int RandomGenerator::RndZeroOne(double p)
         return 1;
     return 0;
 }
+
+void RandomGenerator::GenerateSeeds(int no_seeds){
+    auto uniform_generator = RandomGenerator(44);
+    std::vector<int> seeds;
+    for (int i = 0; i < no_seeds; ++i) {
+        uniform_generator.Rand();
+        std::cout << "seed: " << uniform_generator.get_kernel() << std::endl;
+        seeds.push_back(uniform_generator.get_kernel());
+    }
+    // Save data
+    std::ofstream output_file("./seeds.txt");
+    std::ostream_iterator<int> output_iterator(output_file, "\n");
+    std::copy(seeds.begin(), seeds.end(), output_iterator);
+}
+

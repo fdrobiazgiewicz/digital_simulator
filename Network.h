@@ -15,7 +15,7 @@ public:
     void Init();
     void RadarConnection();
     void RadarDisconnection();
-    void UserArrival(unsigned int arrival_time, unsigned int transmission_time);
+    void UserArrival(unsigned int arrival_time, unsigned int transmission_time, int user_type);
     void U2ConnectToChannel(std::shared_ptr<User> user);
     void U3ConnectToChannel(std::shared_ptr<User> user);
     bool U2ChannelAccess(std::shared_ptr<User> user);

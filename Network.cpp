@@ -45,13 +45,11 @@ void Network::RadarDisconnection() {
     }
 }
 
-void Network::UserArrival(unsigned int arrival_time, unsigned int transmission_time) {
-    int user_type_drawing = rand() % 100;
-
-    if (user_type_drawing <= 60){
+void Network::UserArrival(unsigned int arrival_time, unsigned int transmission_time, int user_type) {
+    if (user_type){
         decision_list_.push_back(std::make_shared<User>(arrival_time, 10 * transmission_time, User::UserType::LICENSED));
     }
-    else if (user_type_drawing >= 60){
+    else{
         decision_list_.push_back(std::make_shared<User>(arrival_time, 10 * transmission_time, User::UserType::NOT_LICENSED));
     }
 }
