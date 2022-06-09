@@ -5,8 +5,12 @@
 #include "spdlog/spdlog.h"
 #include "RandomGenerator.h"
 #include <fstream>
+#include <numeric>
 
 int max_arrival_time = 100;
+double occupied_channels_counter = 0;
+double licensed_users_counter = 0;
+double unlicensed_users_counter = 0;
 
 //spdlog::info("Welcome to spdlog!");
 
@@ -34,7 +38,6 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
         seed_file >> seed;
         if (i >= (seed_set - 1) * 4){
             seeds.push_back(seed);
-            std::cout<<"Seed "<<i + 1<<" is: "<<seed<<std::endl;
         }
     }
 
@@ -61,8 +64,6 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
 //    std::cout<<"01: "<<dec_gen->RndZeroOne(n)<<std::endl;
 
 
-
-
     time *= 1000;
     clock_ = 0;
     network_->Init();
@@ -70,16 +71,19 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
     network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
     spdlog::info("Started Simulation method M1");
     float clock_counter = 0;
+//    std::vector<double> channel_occupancy;
+//    channel_occupancy.reserve(time);
+
+    // Occupied channels txt file
+//    std::ofstream channels_file("occupied_channels.txt", std::ofstream::out);
 
     while (clock_ < static_cast<size_t>(time)) {
         bool no_event = false;
 
-//        std::cout << "Simulation time_: " << clock_ << "\n";
         if (clock_ / 1000 >= clock_counter){
             spdlog::debug("Simulation time_: {}", clock_counter);
             clock_counter += 1;
         }
-//        spdlog::info("Simulation time_: {}", clock_);
 
         // Handle events
         while (!no_event) {
@@ -123,8 +127,9 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
                 }
             }
 
-            // Checking for user transmission end (User disconnection)
+            // Looping through channels
             std::vector<std::shared_ptr<Channel>> channel_list = network_->get_channels();
+            // Checking for user transmission end (User disconnection)
             for (const auto &i: channel_list){
 //                std::cout<<"Get connection time: "<<i.get()->get_connection_time()<<std::endl;
                 if(i.get()->get_connection_time() == clock_ && i.get()->get_channel_license() != Channel::ChannelLicense::RADAR){
@@ -139,16 +144,38 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             }
         }
 
+        // Statistics - channel occupancy
+        std::vector<std::shared_ptr<Channel>> channel_list = network_->get_channels();
+        // Checking for user transmission end (User disconnection)
+        for (const auto &i: channel_list){
+            if (clock_ % 1000 == 0){
+                if (!i.get()->is_free()){
+                    occupied_channels_counter++;
+                    if(i.get()->get_user_type() == User::UserType::LICENSED){
+                        licensed_users_counter++;
+                    }
+                    else if(i.get()->get_user_type() == User::UserType::NOT_LICENSED){
+                        unlicensed_users_counter++;
+                    }
+                }
+            }
+        }
+
         // Update time
         network_->radar_set_transmission_time((network_->radar_get_transmission_time() - 1));
         network_->radar_set_generate_timer((network_->radar_get_generate_time() - 1));
         network_->user_set_generate_time((network_->user_get_generate_time() - 1));
         network_->set_buffer_polling_time((network_->get_buffer_polling_time() - 1));
         clock_++;
-
-//            network_->print_decision_list();
-
-
     }
+
+    double mean_channel_occupancy = occupied_channels_counter / (20.0 * time/1000);
+    double mean_serving_licensed_users = licensed_users_counter / (time/1000);
+    double mean_serving_unlicensed_users = unlicensed_users_counter / (time/1000);
+
+    std::cout<<std::endl;
+    spdlog::info("Mean channel occupancy: {}", mean_channel_occupancy);
+    spdlog::info("Mean serving licensed users: {}", mean_serving_licensed_users);
+    spdlog::info("Mean serving unlicensed users: {}", mean_serving_unlicensed_users);
 
 }
