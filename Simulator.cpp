@@ -7,10 +7,15 @@
 #include <fstream>
 #include <numeric>
 
-int max_arrival_time = 100;
 double occupied_channels_counter = 0;
 double licensed_users_counter = 0;
 double unlicensed_users_counter = 0;
+double licensed_users_connections = 0;
+double unlicensed_users_connections = 0;
+double users_connections = 0;
+double licensed_users_connections_lost = 0;
+double unlicensed_users_connections_lost = 0;
+double users_connections_lost = 0;
 
 //spdlog::info("Welcome to spdlog!");
 
@@ -71,6 +76,7 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
     network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
     spdlog::info("Started Simulation method M1");
     float clock_counter = 0;
+    bool if_lost_u2, if_lost_u3;
 //    std::vector<double> channel_occupancy;
 //    channel_occupancy.reserve(time);
 
@@ -120,10 +126,16 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             std::list<std::shared_ptr<User>> decision_list = network_->get_decision_list();
             for (const auto &i: decision_list) {
                 if (i.get()->get_user_type() == User::UserType::LICENSED) {
-                    network_->U2ConnectToChannel(i);
+                    if_lost_u2 = network_->U2ConnectToChannel(i);
+                    if (!if_lost_u2){
+                        licensed_users_connections_lost++;
+                    }
                 }
                 else if (i.get()->get_user_type() == User::UserType::NOT_LICENSED){
-                    network_->U3ConnectToChannel(i);
+                    if_lost_u3 = network_->U3ConnectToChannel(i);
+                    if (!if_lost_u3){
+                        unlicensed_users_connections_lost++;
+                    }
                 }
             }
 
@@ -174,7 +186,13 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
     double mean_serving_unlicensed_users = unlicensed_users_counter / (time/1000);
 
     std::cout<<std::endl;
+    spdlog::info("Blockage probability: {}", network_->users_connections_lost/network_->users_connections);
+    std::cout<<std::endl;
     spdlog::info("Mean channel occupancy: {}", mean_channel_occupancy);
+    spdlog::info("Licensed users blockage probability: {}", network_->licensed_users_connections_lost/
+                                                                    network_->licensed_users_connections);
+    spdlog::info("Unlicensed users blockage probability: {}", network_->unlicensed_users_connections_lost/
+                                                              network_->unlicensed_users_connections);
     spdlog::info("Mean serving licensed users: {}", mean_serving_licensed_users);
     spdlog::info("Mean serving unlicensed users: {}", mean_serving_unlicensed_users);
 

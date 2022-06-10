@@ -48,7 +48,6 @@ void RandomGenerator::GenerateSeeds(int no_seeds){
     std::vector<int> seeds;
     for (int i = 0; i < no_seeds; ++i) {
         uniform_generator.Rand();
-        std::cout << "seed: " << uniform_generator.get_kernel() << std::endl;
         seeds.push_back(uniform_generator.get_kernel());
     }
     // Save data

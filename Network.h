@@ -16,8 +16,8 @@ public:
     void RadarConnection();
     void RadarDisconnection();
     void UserArrival(unsigned int arrival_time, unsigned int transmission_time, int user_type);
-    void U2ConnectToChannel(std::shared_ptr<User> user);
-    void U3ConnectToChannel(std::shared_ptr<User> user);
+    bool U2ConnectToChannel(std::shared_ptr<User> user);
+    bool U3ConnectToChannel(std::shared_ptr<User> user);
     bool U2ChannelAccess(std::shared_ptr<User> user);
     bool U3ChannelAccess(std::shared_ptr<User> user);
     void BufferPolling();
@@ -39,6 +39,14 @@ public:
     std::list<std::shared_ptr<User>> get_decision_list() { return decision_list_; }
 
     void print_decision_list();
+
+    // Statistic purpose
+    double licensed_users_connections = 0;
+    double unlicensed_users_connections = 0;
+    double users_connections = 0;
+    double licensed_users_connections_lost = 0;
+    double unlicensed_users_connections_lost = 0;
+    double users_connections_lost = 0;
 
 
 private:
