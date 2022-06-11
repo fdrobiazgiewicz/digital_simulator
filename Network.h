@@ -38,6 +38,8 @@ public:
 
     std::list<std::shared_ptr<User>> get_decision_list() { return decision_list_; }
 
+    void set_after_initial_state() {if_after_initial = true; }
+
     void print_decision_list();
 
     // Statistic purpose
@@ -60,6 +62,7 @@ private:
     size_t user_generate_time = -1;
     size_t buffer_polling = 0;
     bool connection_success = false;
+    bool if_after_initial = false;
 
 };
 

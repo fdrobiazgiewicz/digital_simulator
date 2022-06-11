@@ -34,12 +34,13 @@ void Network::RadarConnection() {
             channels_[i].get()->disconnect_from_channel();
             channels_[i].get()->set_connection_time(radar_connection_time * 1000);
             // Statistics
-            users_connections_lost++;
-            if (channels_[i].get()->get_user_type() == User::UserType::LICENSED){
-                licensed_users_connections_lost++;
-            }
-            else if (channels_[i].get()->get_user_type() == User::UserType::NOT_LICENSED){
-                unlicensed_users_connections_lost++;
+            if (if_after_initial) {
+                users_connections_lost++;
+                if (channels_[i].get()->get_user_type() == User::UserType::LICENSED) {
+                    licensed_users_connections_lost++;
+                } else if (channels_[i].get()->get_user_type() == User::UserType::NOT_LICENSED) {
+                    unlicensed_users_connections_lost++;
+                }
             }
         }
         channels_[i].get()->connect_to_channel();
@@ -54,14 +55,19 @@ void Network::RadarDisconnection() {
 }
 
 void Network::UserArrival(unsigned int arrival_time, unsigned int transmission_time, int user_type) {
-    users_connections++;
     if (user_type){
         decision_list_.push_back(std::make_shared<User>(arrival_time, 10 * transmission_time, User::UserType::LICENSED));
-        licensed_users_connections++;
+        if (if_after_initial){
+            licensed_users_connections++;
+            users_connections++;
+        }
     }
     else{
         decision_list_.push_back(std::make_shared<User>(arrival_time, 10 * transmission_time, User::UserType::NOT_LICENSED));
-        unlicensed_users_connections++;
+        if (if_after_initial){
+            unlicensed_users_connections++;
+            users_connections++;
+        }
     }
 }
 
@@ -87,7 +93,10 @@ bool Network::U2ConnectToChannel(std::shared_ptr<User> user) {
         if (found){
             decision_list_.remove(user);
         }
-        licensed_users_connections_lost++;
+        if (if_after_initial){
+            licensed_users_connections_lost++;
+            users_connections_lost++;
+        }
         return true;
     }
     else {
@@ -142,8 +151,10 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             go_to_buffer = false;
             spdlog::debug("User U2 connected to the channel of index {} ", i);
             spdlog::debug("User U3 deleted due to U2 connection priority.");
-            users_connections_lost++;
-            unlicensed_users_connections_lost++;
+            if (if_after_initial){
+                users_connections_lost++;
+                unlicensed_users_connections_lost++;
+            }
             channels_[i].get()->connect_to_channel();
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
@@ -195,8 +206,10 @@ bool Network::U3ConnectToChannel(std::shared_ptr<User> user) {
     else if (buffer_.get_buffer_size() >= 5 && go_to_buffer) {
         spdlog::debug("Buffer full. User removed from decision list.");
 //        std::cout<<"User removed from decision list\n";
-        users_connections_lost++;
-        unlicensed_users_connections_lost++;
+        if (if_after_initial) {
+            users_connections_lost++;
+            unlicensed_users_connections_lost++;
+        }
         bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
         if (found){
             decision_list_.remove(user);
@@ -278,7 +291,6 @@ void Network::print_decision_list() {
 
 void Network::BufferPolling() {
     std::queue<std::shared_ptr<User>> buffer = buffer_.get_buffer();
-    std::cout<<"\nBuffer size: "<<buffer.size()<<std::endl;
     if (buffer.front() != nullptr && !buffer.empty()) {
         if (buffer.front()->get_user_type() == User::UserType::LICENSED) {
             connection_success = false;
@@ -295,8 +307,10 @@ void Network::BufferPolling() {
                 spdlog::debug("USER DELETED FROM BUFFER");
                 //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
                 buffer_.delete_user_from_buffer();
-                users_connections_lost++;
-                licensed_users_connections_lost++;
+                if (if_after_initial){
+                    users_connections_lost++;
+                    licensed_users_connections_lost++;
+                }
             }
         }
         else if (buffer.front()->get_user_type() == User::UserType::NOT_LICENSED) {
@@ -314,8 +328,10 @@ void Network::BufferPolling() {
                 spdlog::debug("USER DELETED FROM BUFFER");
                 //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
                 buffer_.delete_user_from_buffer();
-                users_connections_lost++;
-                unlicensed_users_connections_lost++;
+                if (if_after_initial){
+                    users_connections_lost++;
+                    unlicensed_users_connections_lost++;
+                }
             }
         }
     }

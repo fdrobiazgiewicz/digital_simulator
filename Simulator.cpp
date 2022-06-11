@@ -11,13 +11,12 @@ double occupied_channels_counter = 0;
 double licensed_users_counter = 0;
 double unlicensed_users_counter = 0;
 
-//spdlog::info("Welcome to spdlog!");
 
 Simulator::Simulator(Network* network) : network_(network)
 {
 }
 
-void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int seed_set, bool if_debug) {
+void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambda, double n, int seed_set, bool if_debug) {
 
     if (if_debug) {
         spdlog::set_level(spdlog::level::debug);
@@ -75,7 +74,7 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
 //    channel_occupancy.reserve(time);
 
     // Occupied channels txt file
-//    std::ofstream channels_file("occupied_channels.txt", std::ofstream::out);
+    std::ofstream channels_file("occupied_channels.txt", std::ofstream::out);
 
     while (clock_ < static_cast<size_t>(time)) {
         bool no_event = false;
@@ -141,13 +140,16 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             }
         }
 
+        double current_occupancy = 0;
+
         // Statistics - channel occupancy
         std::vector<std::shared_ptr<Channel>> channel_list = network_->get_channels();
         // Checking for user transmission end (User disconnection)
         for (const auto &i: channel_list){
             if (clock_ % 10 == 0){
-                if (!i.get()->is_free()){
+                if (!i.get()->is_free() && (clock_/10 > initial_time)){
                     occupied_channels_counter++;
+                    current_occupancy++;
                     if(i.get()->get_user_type() == User::UserType::LICENSED){
                         licensed_users_counter++;
                     }
@@ -158,6 +160,14 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             }
         }
 
+        if (clock_ % 10 == 0){
+            channels_file << current_occupancy/20 << "\n";
+        }
+
+        if (clock_/10 == initial_time){
+            network_->set_after_initial_state();
+        }
+
         // Update time
         network_->radar_set_transmission_time((network_->radar_get_transmission_time() - 1));
         network_->radar_set_generate_timer((network_->radar_get_generate_time() - 1));
@@ -166,9 +176,9 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
         clock_++;
     }
 
-    double mean_channel_occupancy = occupied_channels_counter / (20.0 * time/10);
-    double mean_serving_licensed_users = licensed_users_counter / (time/10);
-    double mean_serving_unlicensed_users = unlicensed_users_counter / (time/10);
+    double mean_channel_occupancy = occupied_channels_counter / (20.0 * (time/10-initial_time));
+    double mean_serving_licensed_users = licensed_users_counter / (time/10-initial_time);
+    double mean_serving_unlicensed_users = unlicensed_users_counter / (time/10-initial_time);
 
     std::cout<<std::endl;
     spdlog::info("Blockage probability: {}", network_->users_connections_lost/network_->users_connections);
@@ -181,4 +191,5 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
     spdlog::info("Mean serving licensed users: {}", mean_serving_licensed_users);
     spdlog::info("Mean serving unlicensed users: {}", mean_serving_unlicensed_users);
 
+    channels_file.close();
 }
