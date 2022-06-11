@@ -73,14 +73,20 @@ bool Network::U2ConnectToChannel(std::shared_ptr<User> user) {
 //        std::cout<<"User U2 added to buffer."<<std::endl;
         spdlog::debug("User U2 added to buffer.");
         buffer_.add_user_to_buffer(user);
-        decision_list_.remove(user);
+        bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+        if (found){
+            decision_list_.remove(user);
+        }
         return false;
     }
     // Delete user if buffer is full and no free channels
     else if (buffer_.get_buffer_size() >= 5 && go_to_buffer){
         spdlog::debug("Buffer full. User removed from decision list.");
 //        std::cout<<"User removed from decision list\n";
-        decision_list_.remove(user);
+        bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+        if (found){
+            decision_list_.remove(user);
+        }
         licensed_users_connections_lost++;
         return true;
     }
@@ -103,7 +109,10 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
 //            std::cout << "User U2 connected to the channel of index " << i << std::endl;
             spdlog::debug("User U2 connected to the channel of index {} ", i);
             connection_success = true;
@@ -118,7 +127,10 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             spdlog::debug("User U2 connected to the channel of index {} (Common channel)", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
@@ -136,7 +148,10 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             connection_success = true;
 //            break;
             return go_to_buffer;
@@ -149,7 +164,10 @@ bool Network::U2ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             spdlog::debug("User U2 connected to the channel of index {} (Dedicated for Radar)", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
@@ -167,7 +185,10 @@ bool Network::U3ConnectToChannel(std::shared_ptr<User> user) {
         spdlog::debug("User U3 added to buffer.");
 //        std::cout << "User U3 added to buffer." << std::endl;
         buffer_.add_user_to_buffer(user);
-        decision_list_.remove(user);
+        bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+        if (found){
+            decision_list_.remove(user);
+        }
         return false;
     }
     // Delete user if buffer is full and no free channels
@@ -176,7 +197,10 @@ bool Network::U3ConnectToChannel(std::shared_ptr<User> user) {
 //        std::cout<<"User removed from decision list\n";
         users_connections_lost++;
         unlicensed_users_connections_lost++;
-        decision_list_.remove(user);
+        bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+        if (found){
+            decision_list_.remove(user);
+        }
         return true;
     }
     else {
@@ -196,7 +220,10 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::NOT_LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             spdlog::debug("User U3 connected to the channel of index {}", i);
 //            std::cout << "User U3 connected to the channel of index " << i << std::endl;
             connection_success = true;
@@ -212,7 +239,10 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::NOT_LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             spdlog::debug("User U3 connected to the channel of index {} (Dedicated for Radar)", i);
             connection_success = true;
 //            break;
@@ -227,7 +257,10 @@ bool Network::U3ChannelAccess(std::shared_ptr<User> user) {
             channels_[i].get()->set_user_type(User::UserType::NOT_LICENSED);
             channels_[i].get()->set_connection_time(
                     ((user.get()->get_arrival_time()) + (user.get()->get_transmission_time())));
-            decision_list_.remove(user);
+            bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
+            if (found){
+                decision_list_.remove(user);
+            }
             spdlog::debug("User U3 connected to the channel of index {} (Dedicated for U2)", i);
             connection_success = true;
 //            break;
@@ -245,42 +278,45 @@ void Network::print_decision_list() {
 
 void Network::BufferPolling() {
     std::queue<std::shared_ptr<User>> buffer = buffer_.get_buffer();
-    if (buffer.front()->get_user_type() == User::UserType::LICENSED){
-        connection_success = false;
-        bool _ = U2ChannelAccess(buffer.front());
-        if (connection_success){
-            spdlog::debug("(Connection from buffer)");
-//            std::cout<<"User U2 connected from buffer."<<std::endl;
-            buffer_.delete_user_from_buffer();
+    std::cout<<"\nBuffer size: "<<buffer.size()<<std::endl;
+    if (buffer.front() != nullptr && !buffer.empty()) {
+        if (buffer.front()->get_user_type() == User::UserType::LICENSED) {
+            connection_success = false;
+            bool _ = U2ChannelAccess(buffer.front());
+            if (connection_success) {
+                spdlog::debug("(Connection from buffer)");
+                //            std::cout<<"User U2 connected from buffer."<<std::endl;
+                buffer_.delete_user_from_buffer();
+            }
+            else {
+                buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
+            }
+            if (buffer.front()->get_connection_try_count() == 5) {
+                spdlog::debug("USER DELETED FROM BUFFER");
+                //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
+                buffer_.delete_user_from_buffer();
+                users_connections_lost++;
+                licensed_users_connections_lost++;
+            }
         }
-        if (!connection_success){
-            buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
-        }
-        if (buffer.front()->get_connection_try_count() == 5){
-            spdlog::debug("USER DELETED FROM BUFFER");
-//            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
-            buffer_.delete_user_from_buffer();
-            users_connections_lost++;
-            licensed_users_connections_lost++;
-        }
-    }
-    else if (buffer.front()->get_user_type() == User::UserType::NOT_LICENSED){
-        connection_success = false;
-        bool _ = U3ChannelAccess(buffer.front());
-        if (connection_success){
-            spdlog::debug("(Connection from buffer)");
-//            std::cout<<"User U3 connected from buffer."<<std::endl;
-            buffer_.delete_user_from_buffer();
-        }
-        if (!connection_success){
-            buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
-        }
-        if (buffer.front()->get_connection_try_count() == 5){
-            spdlog::debug("USER DELETED FROM BUFFER");
-//            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
-            buffer_.delete_user_from_buffer();
-            users_connections_lost++;
-            unlicensed_users_connections_lost++;
+        else if (buffer.front()->get_user_type() == User::UserType::NOT_LICENSED) {
+            connection_success = false;
+            bool _ = U3ChannelAccess(buffer.front());
+            if (connection_success) {
+                spdlog::debug("(Connection from buffer)");
+                //            std::cout<<"User U3 connected from buffer."<<std::endl;
+                buffer_.delete_user_from_buffer();
+            }
+            if (!connection_success) {
+                buffer.front()->set_connection_try_count(buffer.front()->get_connection_try_count() + 1);
+            }
+            if (buffer.front()->get_connection_try_count() == 5) {
+                spdlog::debug("USER DELETED FROM BUFFER");
+                //            std::cout<<"USER DELETED FROM BUFFER"<<std::endl;
+                buffer_.delete_user_from_buffer();
+                users_connections_lost++;
+                unlicensed_users_connections_lost++;
+            }
         }
     }
 }

@@ -10,12 +10,6 @@
 double occupied_channels_counter = 0;
 double licensed_users_counter = 0;
 double unlicensed_users_counter = 0;
-double licensed_users_connections = 0;
-double unlicensed_users_connections = 0;
-double users_connections = 0;
-double licensed_users_connections_lost = 0;
-double unlicensed_users_connections_lost = 0;
-double users_connections_lost = 0;
 
 //spdlog::info("Welcome to spdlog!");
 
@@ -69,11 +63,11 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
 //    std::cout<<"01: "<<dec_gen->RndZeroOne(n)<<std::endl;
 
 
-    time *= 1000;
+    time *= 10;
     clock_ = 0;
     network_->Init();
-    network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 1000);
-    network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
+    network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 10);
+    network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 10);
     spdlog::info("Started Simulation method M1");
     float clock_counter = 0;
     bool if_lost_u2, if_lost_u3;
@@ -86,7 +80,7 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
     while (clock_ < static_cast<size_t>(time)) {
         bool no_event = false;
 
-        if (clock_ / 1000 >= clock_counter){
+        if (clock_ / 10 >= clock_counter){
             spdlog::debug("Simulation time_: {}", clock_counter);
             clock_counter += 1;
         }
@@ -96,28 +90,25 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             no_event = true;
             // Radar connection
             if (network_->radar_get_generate_time() == 0) {
-//                std::cout << "Radar connect." << std::endl;
                 spdlog::debug("Radar connect");
                 network_->RadarConnection();
-                network_->radar_set_transmission_time(10 * 1000 );
+                network_->radar_set_transmission_time(10 * 10 );
                 network_->radar_set_generate_timer(-1);
                 no_event = false;
             }
             // Radar disconnection
             if (network_->radar_get_transmission_time() == 0) {
-//                std::cout << "Radar disconnect." << std::endl;
                 spdlog::debug("Radar disconnect");
                 network_->RadarDisconnection();
                 network_->radar_set_transmission_time(-1);
-                network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 1000);
+                network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 10);
                 no_event = false;
             }
             // User U2/U3 arrival
             if (network_->user_get_generate_time() == 0) {
-                network_->UserArrival(clock_, (q_gen->RndExp(q_lambda) + 1) * 1000,
+                network_->UserArrival(clock_, (q_gen->RndExp(q_lambda) + 1) * 10,
                                       dec_gen->RndZeroOne(n));
-                network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 1000);
-//                std::cout << "New user!" << std::endl;
+                network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 10);
                 spdlog::debug("New user!");
                 no_event = false;
             }
@@ -127,15 +118,9 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
             for (const auto &i: decision_list) {
                 if (i.get()->get_user_type() == User::UserType::LICENSED) {
                     if_lost_u2 = network_->U2ConnectToChannel(i);
-                    if (!if_lost_u2){
-                        licensed_users_connections_lost++;
-                    }
                 }
                 else if (i.get()->get_user_type() == User::UserType::NOT_LICENSED){
                     if_lost_u3 = network_->U3ConnectToChannel(i);
-                    if (!if_lost_u3){
-                        unlicensed_users_connections_lost++;
-                    }
                 }
             }
 
@@ -152,7 +137,7 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
 
             if (network_->get_buffer_polling_time() == 0){
                 network_->BufferPolling();
-                network_->set_buffer_polling_time(0.2 * 1000);
+                network_->set_buffer_polling_time(0.2 * 10);
             }
         }
 
@@ -160,7 +145,7 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
         std::vector<std::shared_ptr<Channel>> channel_list = network_->get_channels();
         // Checking for user transmission end (User disconnection)
         for (const auto &i: channel_list){
-            if (clock_ % 1000 == 0){
+            if (clock_ % 10 == 0){
                 if (!i.get()->is_free()){
                     occupied_channels_counter++;
                     if(i.get()->get_user_type() == User::UserType::LICENSED){
@@ -181,9 +166,9 @@ void Simulator::M1(int time, double tau_lambda, double q_lambda, double n, int s
         clock_++;
     }
 
-    double mean_channel_occupancy = occupied_channels_counter / (20.0 * time/1000);
-    double mean_serving_licensed_users = licensed_users_counter / (time/1000);
-    double mean_serving_unlicensed_users = unlicensed_users_counter / (time/1000);
+    double mean_channel_occupancy = occupied_channels_counter / (20.0 * time/10);
+    double mean_serving_licensed_users = licensed_users_counter / (time/10);
+    double mean_serving_unlicensed_users = unlicensed_users_counter / (time/10);
 
     std::cout<<std::endl;
     spdlog::info("Blockage probability: {}", network_->users_connections_lost/network_->users_connections);
