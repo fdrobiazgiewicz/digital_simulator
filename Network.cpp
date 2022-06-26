@@ -9,22 +9,15 @@ void Network::Init(){
     decision_list_.clear();
     // Creating channels
     for (int i=0; i < 5; i++){
-//        Channel channel(Channel::ChannelLicense::RADAR);
         channels_.push_back(std::make_shared<Channel>(Channel::ChannelLicense::RADAR));
     }
 
     for (int i=5; i<10; i++){
-//        Channel channel(Channel::ChannelLicense::UNLICENSED);
         channels_.push_back(std::make_shared<Channel>(Channel::ChannelLicense::UNLICENSED));
     }
     for (int i=10; i<20; i++){
-//        Channel channel(Channel::ChannelLicense::LICENSED);
         channels_.push_back(std::make_shared<Channel>(Channel::ChannelLicense::LICENSED));
     }
-
-
-    // Setting channels licenses
-
 }
 
 void Network::RadarConnection() {
@@ -194,7 +187,6 @@ bool Network::U3ConnectToChannel(std::shared_ptr<User> user) {
     // Add user to buffer
     if (buffer_.get_buffer_size() < 5 && go_to_buffer) {
         spdlog::debug("User U3 added to buffer.");
-//        std::cout << "User U3 added to buffer." << std::endl;
         buffer_.add_user_to_buffer(user);
         bool found = (std::find(decision_list_.begin(), decision_list_.end(), user) != decision_list_.end());
         if (found){
@@ -205,7 +197,6 @@ bool Network::U3ConnectToChannel(std::shared_ptr<User> user) {
     // Delete user if buffer is full and no free channels
     else if (buffer_.get_buffer_size() >= 5 && go_to_buffer) {
         spdlog::debug("Buffer full. User removed from decision list.");
-//        std::cout<<"User removed from decision list\n";
         if (if_after_initial) {
             users_connections_lost++;
             unlicensed_users_connections_lost++;
