@@ -56,8 +56,8 @@ private:
 	std::vector<std::shared_ptr<Channel>> channels_;
 	std::list<std::shared_ptr<User>> decision_list_;
     const int number_of_channels = 20;
-    size_t radar_generate_time = -1;
-    size_t radar_transmission_time = -1;
+    size_t radar_generate_time = 19999999;
+    size_t radar_transmission_time = 199999999;
     size_t radar_connection_time = 10;
     size_t user_generate_time = -1;
     size_t buffer_polling = 0;

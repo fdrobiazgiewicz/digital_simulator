@@ -4,8 +4,8 @@
 #include <iostream>
 #include <tuple>
 
-std::tuple<int, int, int, double, bool> menu(){
-    int no_seed, sim_time, init_time;
+std::tuple<int, int, int, int, double, bool> menu(){
+    int no_seed, sim_time, init_time, served_users;
     double lambda;
     std::cout<<"Enter the set of seeds <1,10>: ";
     std::cin >> no_seed;
@@ -24,6 +24,12 @@ std::tuple<int, int, int, double, bool> menu(){
     while (init_time < 0){
         std::cout<<"Initial time of simulation has to be greater than 0!\nEnter initial time of simulations: ";
         std::cin>>init_time;
+    }
+    std::cout<<"Enter number of served to finish simulation: ";
+    std::cin>>served_users;
+    while (served_users < 0){
+        std::cout<<"Number of served users has to be greater than 0!\nEnter number of served to finish simulation: ";
+        std::cin>>sim_time;
     }
     std::cout<<"Enter lambda parameter: ";
     std::cin>>lambda;
@@ -45,14 +51,14 @@ std::tuple<int, int, int, double, bool> menu(){
     else if (decision == 'n'){
         if_debug = false;
     }
-    return {no_seed, sim_time, init_time, lambda, if_debug};
+    return {no_seed, sim_time, init_time, served_users, lambda, if_debug};
 }
 
 int main(int argc, char* argv[])
 {
-    auto [no_seed, sim_time, init_time, lambda, if_debug] = menu();
+    auto [no_seed, sim_time, init_time, served_users, lambda, if_debug] = menu();
     Network* network = new Network();
     Simulator simulator = Simulator(network);
 
-    simulator.M1(sim_time, init_time, lambda, 0.1, 0.6, no_seed, if_debug);
+    simulator.M1(sim_time, init_time, lambda, 0.1, 0.6, no_seed, served_users, if_debug);
 }

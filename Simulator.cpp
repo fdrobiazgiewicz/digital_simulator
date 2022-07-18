@@ -1,11 +1,11 @@
 #include "Simulator.h"
 #include "Network.h"
-#include "Radar.h"
 #include <iostream>
 #include "spdlog/spdlog.h"
 #include "RandomGenerator.h"
 #include <fstream>
-#include <numeric>
+#include <vector>
+#include <cmath>
 
 double occupied_channels_counter = 0;
 double licensed_users_counter = 0;
@@ -16,7 +16,8 @@ Simulator::Simulator(Network* network) : network_(network)
 {
 }
 
-void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambda, double n, int seed_set, bool if_debug) {
+void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambda, double n, int seed_set,
+                   int served_users, bool if_debug) {
 
     if (if_debug) {
         spdlog::set_level(spdlog::level::debug);
@@ -78,11 +79,16 @@ void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambd
 
     while (clock_ < static_cast<size_t>(time)) {
         bool no_event = false;
+        std::vector<size_t> time_to_skip;
+        time_to_skip.clear();
+        time_to_skip.push_back(network_->radar_get_generate_time());
+        time_to_skip.push_back(network_->user_get_generate_time());
 
-        if (clock_ / 10 >= clock_counter){
-            spdlog::debug("Simulation time_: {}", clock_counter);
-            clock_counter += 1;
-        }
+//        if (clock_ / 10 >= clock_counter){
+//            spdlog::debug("Simulation time_: {}", clock_counter);
+//        }
+        spdlog::debug("Simulation time_: {}", floor(clock_/10));
+
 
         // Handle events
         while (!no_event) {
@@ -92,23 +98,28 @@ void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambd
                 spdlog::debug("Radar connect");
                 network_->RadarConnection();
                 network_->radar_set_transmission_time(10 * 10 );
-                network_->radar_set_generate_timer(-1);
+                time_to_skip.push_back(10*10);
+                network_->radar_set_generate_timer(19999999);
                 no_event = false;
             }
             // Radar disconnection
             if (network_->radar_get_transmission_time() == 0) {
                 spdlog::debug("Radar disconnect");
                 network_->RadarDisconnection();
-                network_->radar_set_transmission_time(-1);
+                network_->radar_set_transmission_time(19999999);
                 network_->radar_set_generate_timer(round((uni_gen->Rand()) * 5) * 10);
+                time_to_skip.push_back(network_->radar_get_generate_time());
                 no_event = false;
             }
             // User U2/U3 arrival
             if (network_->user_get_generate_time() == 0) {
-                network_->UserArrival(clock_, (q_gen->RndExp(q_lambda) + 1) * 10,
+                size_t transmission_time = (q_gen->RndExp(q_lambda) + 1) * 10;
+                network_->UserArrival(clock_, transmission_time,
                                       dec_gen->RndZeroOne(n));
                 network_->user_set_generate_time((tau_gen->RndExp(tau_lambda) + 1) * 10);
                 spdlog::debug("New user!");
+                time_to_skip.push_back(transmission_time);
+                time_to_skip.push_back(network_->user_get_generate_time());
                 no_event = false;
             }
 
@@ -127,7 +138,9 @@ void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambd
             std::vector<std::shared_ptr<Channel>> channel_list = network_->get_channels();
             // Checking for user transmission end (User disconnection)
             for (const auto &i: channel_list){
-//                std::cout<<"Get connection time: "<<i.get()->get_connection_time()<<std::endl;
+                if (i.get()->get_connection_time() != 0 && i.get()->get_channel_license() != Channel::ChannelLicense::RADAR){
+                    time_to_skip.push_back(i.get()->get_connection_time() - clock_);
+                }
                 if(i.get()->get_connection_time() == clock_ && i.get()->get_channel_license() != Channel::ChannelLicense::RADAR){
                     i.get()->disconnect_from_channel();
                     spdlog::debug("User disconnected from channel");
@@ -168,12 +181,32 @@ void Simulator::M1(int time, int initial_time, double tau_lambda, double q_lambd
             network_->set_after_initial_state();
         }
 
+        // Find maximum time to skip (to the occurrence of any event)
+        auto max_time_to_skip = *std::min_element(time_to_skip.begin(), time_to_skip.end());
+
+
+        if (max_time_to_skip <= 10 || max_time_to_skip > 100 || network_->user_get_generate_time() > 10000000000){
+            max_time_to_skip = 1;
+        }
+        else{
+            max_time_to_skip = static_cast<size_t>(floor(max_time_to_skip/10) * 10);
+        }
+
         // Update time
-        network_->radar_set_transmission_time((network_->radar_get_transmission_time() - 1));
-        network_->radar_set_generate_timer((network_->radar_get_generate_time() - 1));
-        network_->user_set_generate_time((network_->user_get_generate_time() - 1));
+        network_->radar_set_transmission_time((network_->radar_get_transmission_time() - max_time_to_skip));
+        network_->radar_set_generate_timer((network_->radar_get_generate_time() - max_time_to_skip));
+        network_->user_set_generate_time((network_->user_get_generate_time() - max_time_to_skip));
         network_->set_buffer_polling_time((network_->get_buffer_polling_time() - 1));
-        clock_++;
+        clock_ += max_time_to_skip;
+        if(max_time_to_skip > 10){
+            spdlog::debug("No events, skipping next {}ms", max_time_to_skip/10);
+        }
+
+        // Served users to end simulation
+        if(network_->users_connections > served_users){
+            spdlog::debug("Served users parameter exceeded. Finishing simulation...");
+            break;
+        }
     }
 
     double mean_channel_occupancy = occupied_channels_counter / (20.0 * (time/10-initial_time));
